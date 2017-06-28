@@ -19,6 +19,9 @@ import (
 var (
 	// MinimumRefreshInterval decides the maximum sleep time between SRV Lookups, otherwise controlled by TTL of records.
 	MinimumRefreshInterval = 5 * time.Second
+
+	// NoRetryLimit specifies that there is no limit to number of srv lookup failures.
+	NoRetryLimit = -1
 )
 
 var errClosed = errors.New("go-srvlb: closed")
@@ -42,7 +45,7 @@ func WithMaximumConsecutiveErrors(maxErr int) SrvResolverOptions {
 
 // New creates a gRPC naming.Resolver that is backed by an SRV lookup resolver.
 func New(srvResolver srv.Resolver, options ...SrvResolverOptions) naming.Resolver {
-	res :=  &resolver{srvResolver: srvResolver, maxConsecutiveErrors: -1}
+	res :=  &resolver{srvResolver: srvResolver, maxConsecutiveErrors: NoRetryLimit}
 	for _,opt := range options {
 		opt(res)
 	}
@@ -106,7 +109,7 @@ func (w *watcher) Next() ([]*naming.Update, error) {
 		if err != nil {
 			lastErr = err
 			consecutiveErrors += 1
-			if consecutiveErrors >= w.maxConsecutiveErrors && w.maxConsecutiveErrors != 0 {
+			if consecutiveErrors >= w.maxConsecutiveErrors && w.maxConsecutiveErrors != NoRetryLimit {
 				break
 			}
 			continue
