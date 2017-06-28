@@ -18,7 +18,7 @@ func Test_NonBlockingBehaviour(t *testing.T) {
 	c := clockwork.NewFakeClock()
 
 	resolver := &mocks.Resolver{}
-	w := startNewWatcher("testing.improbable.io", resolver, c)
+	w := startNewWatcher("testing.improbable.io", resolver, c, 0)
 
 	resolver.On("Lookup", "testing.improbable.io").Return([]*srv.Target{{
 		DialAddr: "127.0.0.1",
@@ -39,7 +39,7 @@ func Test_BlockForTTL(t *testing.T) {
 	c := clockwork.NewFakeClock()
 
 	resolver := &mocks.Resolver{}
-	w := startNewWatcher("testing.improbable.io", resolver, c)
+	w := startNewWatcher("testing.improbable.io", resolver, c, 0)
 
 	resTTL := 5 * time.Second
 	resolver.On("Lookup", "testing.improbable.io").Return([]*srv.Target{{
@@ -70,7 +70,7 @@ func Test_WatcherClosed(t *testing.T) {
 	c := clockwork.NewFakeClock()
 
 	resolver := &mocks.Resolver{}
-	w := startNewWatcher("testing.improbable.io", resolver, c)
+	w := startNewWatcher("testing.improbable.io", resolver, c, 0)
 
 	w.Close()
 
@@ -82,7 +82,7 @@ func Test_ResolverRetriesOnce(t *testing.T) {
 	c := clockwork.NewFakeClock()
 
 	resolver := &mocks.Resolver{}
-	w := startNewWatcher("testing.improbable.io", resolver, c)
+	w := startNewWatcher("testing.improbable.io", resolver, c, 0)
 
 	resolver.On("Lookup", "testing.improbable.io").Return(nil, fmt.Errorf("datastore: concurrent transaction")).Once()
 
@@ -101,9 +101,9 @@ func Test_ResolverRetriesFailsEventually(t *testing.T) {
 	c := clockwork.NewFakeClock()
 
 	resolver := &mocks.Resolver{}
-	w := startNewWatcher("testing.improbable.io", resolver, c)
-	resolver.On("Lookup", "testing.improbable.io").Return(nil, fmt.Errorf("datastore: concurrent transaction")).Times(MaximumConsecutiveErrors)
+	w := startNewWatcher("testing.improbable.io", resolver, c, 4)
+	resolver.On("Lookup", "testing.improbable.io").Return(nil, fmt.Errorf("datastore: concurrent transaction")).Times(4)
 
 	_, err := w.Next()
-	require.Error(t, err, "SRV watcher failed after 5 tries: datastore: concurrent transaction")
+	require.Error(t, err, "SRV watcher failed after 4 tries: datastore: concurrent transaction")
 }
