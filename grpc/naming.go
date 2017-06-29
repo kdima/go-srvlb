@@ -109,7 +109,7 @@ func (w *watcher) Next() ([]*naming.Update, error) {
 		if err != nil {
 			lastErr = err
 			consecutiveErrors += 1
-			if consecutiveErrors >= w.maxConsecutiveErrors && w.maxConsecutiveErrors != NoRetryLimit {
+			if w.maxConsecutiveErrors != NoRetryLimit && consecutiveErrors >= w.maxConsecutiveErrors {
 				break
 			}
 			continue
